@@ -50,7 +50,7 @@ jobs:
           git fetch --prune origin main
           git fetch --prune upstream main
 
-      - name: Mirror upstream main
+      - name: Merge upstream main while preserving fork fixes
         env:
           SYNC_PAT: ${{ secrets.SYNC_PAT }}
         run: |
@@ -72,7 +72,9 @@ jobs:
             fi
           fi
 
-          echo "🚀 正在镜像上游 main，fork 本地 main 上的额外提交会被丢弃。"
-          git reset --hard upstream/main
-          git push --force-with-lease origin main
-          echo "✅ Fork main 已镜像到上游 main。"
+          # Preserve fork-specific fixes. Conflicts fail the job for review
+          # instead of silently discarding working production changes.
+          echo "🚀 正在合并上游 main，保留 fork 上的自定义修复。"
+          git merge --no-edit upstream/main
+          git push origin main
+          echo "✅ Fork main 已合并上游更新并保留自定义提交。"
